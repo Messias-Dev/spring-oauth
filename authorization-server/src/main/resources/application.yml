@@ -16,3 +16,10 @@ spring:
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     generate-ddl: true
+
+# Security
+security:
+   jwt:
+     keystore-file: auth.jks
+     alias: auth
+     keystore-password: password
