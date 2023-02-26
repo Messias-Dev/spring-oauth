@@ -11,7 +11,6 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.UUID;
 
 @Component
 public final class Jwks {
@@ -37,7 +36,7 @@ public final class Jwks {
 
 		return new RSAKey.Builder(publicKey)
 				.privateKey(privateKey)
-				.keyID(UUID.randomUUID().toString())
+				.keyID("auth")
 				.build();
 	}
 
@@ -48,12 +47,12 @@ public final class Jwks {
 			var keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
 			keyStore.load(new ClassPathResource(this.KEYSTORE_FILE).getInputStream(), this.KEYSTORE_PASSWORD.toCharArray());
 
-			var key = (PrivateKey) keyStore.getKey(this.ALIAS, this.KEYSTORE_PASSWORD.toCharArray());
+			var privateKey = (PrivateKey) keyStore.getKey(this.ALIAS, this.KEYSTORE_PASSWORD.toCharArray());
 
 			Certificate certificate = keyStore.getCertificate(this.ALIAS);
 			PublicKey publicKey = certificate.getPublicKey();
 
-			keyPair = new KeyPair(publicKey, key);
+			keyPair = new KeyPair(publicKey, privateKey);
 		} catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException |
 				 UnrecoverableKeyException e) {
 			throw new RuntimeException(e);
