@@ -39,11 +39,11 @@ public class JwtCustomEncoder implements JwtEncoder {
             jweObject.encrypt(new RSAEncrypter(this.jwks.generateRsa()));
             String jweString = jweObject.serialize();
 
-            return new Jwt(jweString, claims.getIssuedAt(), claims.getExpiresAt(), nimbusJwt.getHeaders(), nimbusJwt.getClaims());
-        } catch (ParseException e) {
-            throw new RuntimeException("Unexpected parse exception");
+            return new Jwt(jweString, claims.getIssuedAt(), claims.getExpiresAt(), nimbusJwt.getHeaders(), claims.getClaims());
         } catch (JOSEException e) {
             throw new RuntimeException("Unexpected JOSE exception");
+        } catch (ParseException e) {
+            throw new RuntimeException("Unexpected Parse exception");
         }
     }
 
