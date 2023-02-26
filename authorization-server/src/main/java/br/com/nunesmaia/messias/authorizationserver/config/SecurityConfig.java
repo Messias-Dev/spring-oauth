@@ -1,6 +1,7 @@
 package br.com.nunesmaia.messias.authorizationserver.config;
 
 import br.com.nunesmaia.messias.authorizationserver.jose.Jwks;
+import br.com.nunesmaia.messias.authorizationserver.jose.JwtCustomEncoder;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -16,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
@@ -83,12 +85,16 @@ public class SecurityConfig {
                 .build();
     }
 
-    // TODO apply JWE
     @Bean
     public JWKSource<SecurityContext> jwkSource() {
         RSAKey rsaKey = this.jwks.generateRsa();
         JWKSet jwkSet = new JWKSet(rsaKey);
         return (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
+    }
+
+    @Bean
+    public JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource) {
+        return new JwtCustomEncoder(jwkSource);
     }
 
     @Bean
