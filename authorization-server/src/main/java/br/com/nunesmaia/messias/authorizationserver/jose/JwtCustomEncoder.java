@@ -2,48 +2,30 @@ package br.com.nunesmaia.messias.authorizationserver.jose;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.RSAEncrypter;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.proc.SecurityContext;
-import com.nimbusds.jwt.SignedJWT;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.jwt.*;
-
-import java.text.ParseException;
 
 public class JwtCustomEncoder implements JwtEncoder {
 
     @Autowired
-    private Jwks jwks;
-    private final JWKSource<SecurityContext> jwkSource;
-
-    public JwtCustomEncoder(JWKSource<SecurityContext> jwkSource) {
-        this.jwkSource = jwkSource;
-    }
+    Jwks jwks;
 
     @Override
     public Jwt encode(JwtEncoderParameters parameters) throws JwtEncodingException {
-        var nimbusJwtEncoder = new NimbusJwtEncoder(this.jwkSource);
-        var nimbusJwt = nimbusJwtEncoder.encode(parameters);
-        var nimbusJwtValue = nimbusJwt.getTokenValue();
 
         JwtClaimsSet claims = parameters.getClaims();
 
         try {
-            SignedJWT parsed = SignedJWT.parse(nimbusJwtValue);
+            var header = new JWEHeader(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A256GCM);
+            var payload = new Payload(claims.getClaims().toString());
+            var jweObject = new JWEObject(header, payload);
 
-            JWEObject jweObject = new JWEObject(
-                    new JWEHeader.Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A256GCM).contentType("JWT").build(),
-                    new Payload(parsed)
-            );
+            jweObject.encrypt(new RSAEncrypter(this.jwks.generateRsa().toRSAPublicKey()));
+            String jwe = jweObject.serialize();
 
-            jweObject.encrypt(new RSAEncrypter(this.jwks.generateRsa()));
-            String jweString = jweObject.serialize();
-
-            return new Jwt(jweString, claims.getIssuedAt(), claims.getExpiresAt(), nimbusJwt.getHeaders(), claims.getClaims());
+            return new Jwt(jwe, claims.getIssuedAt(), claims.getExpiresAt(), header.toJSONObject(), claims.getClaims());
         } catch (JOSEException e) {
             throw new RuntimeException("Unexpected JOSE exception");
-        } catch (ParseException e) {
-            throw new RuntimeException("Unexpected Parse exception");
         }
     }
 
