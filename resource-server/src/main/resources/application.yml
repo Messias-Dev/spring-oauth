@@ -1,0 +1,9 @@
+server:
+  port: 8082
+
+# Security
+security:
+  jwt:
+    keystore-file: auth.jks
+    alias: auth
+    keystore-password: password
