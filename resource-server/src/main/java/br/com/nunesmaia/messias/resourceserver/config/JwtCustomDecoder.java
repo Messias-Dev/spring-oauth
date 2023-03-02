@@ -11,6 +11,7 @@ import org.springframework.security.oauth2.jwt.JwtException;
 
 import java.text.ParseException;
 import java.time.Instant;
+import java.util.Date;
 import java.util.Map;
 
 public class JwtCustomDecoder implements JwtDecoder {
@@ -29,9 +30,8 @@ public class JwtCustomDecoder implements JwtDecoder {
 
             Map<String, Object> jwtPayload = parse.getPayload().toJSONObject();
             Long milliSeconds = (Long) jwtPayload.get("exp");
-            Instant exp = Instant.ofEpochMilli(milliSeconds);
 
-            if (exp.isBefore(Instant.now())) {
+            if (Date.from(Instant.ofEpochSecond(milliSeconds)).before(Date.from(Instant.now()))) {
                 throw new InvalidJwtException();
             }
 
