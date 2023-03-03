@@ -17,13 +17,13 @@ With JDK 17:
 keytool -keystore keystore -genkey -alias auth
 ```
 
-"keystoreFile" and "auth" are just example names, after that command you have to configue other steps on output terminal.
+"keystoreFile" and "auth" are just example names, after that command you have to configure other steps on output terminal.
 
 
 ## Authorization Server
 
 - Create a relational database and default spring schemas
-- Download authorization-server project
+- Clone authorization-server project
 - Put generated Keystore file in the "resource" directory
 - Configure application.yml
 - Run
@@ -113,6 +113,27 @@ spring:
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     generate-ddl: true
+
+# Security
+security:
+   jwt:
+     keystore-file: keystoreFile.jks
+     alias: auth
+     keystore-password: password
+```
+
+
+## Resource Server
+
+- Clone resource-server project
+- Put generated Keystore file in the "resource" directory
+- Configure application.yml
+- Run
+
+application.yml:
+```
+server:
+  port: 8082
 
 # Security
 security:
