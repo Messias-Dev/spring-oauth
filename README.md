@@ -1,6 +1,6 @@
 # Spring OAuth
 
-[Read Article](https://article)
+[Read Article]([https://article](https://medium.com/@messias.lsn/spring-boot-3-oauth-2-0-jwe-48042db9f814))
 
 This is an implementation of authorization server and resourcer server with OAuth protocol and JWE standard in Spring Boot 3.
 The intention is to show a simple implementation changing at least the default Spring Framework settings.
