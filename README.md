@@ -142,3 +142,69 @@ security:
      alias: auth
      keystore-password: password
 ```
+
+## Tests
+
+1. Create an user to be authenticated, you can do it by SQL command or Java configuration
+ * SQL command: tables users and authorities
+ * Java configuration: you certainly can find [here](https://docs.spring.io/spring-security/reference/servlet/authentication/index.html)
+
+2. Create an registered client
+ * I suggest you change the RegisteredClientRepository Bean present on SeurityConfig.java just for an "database dump" and revert changes after that, for example:
+```
+	@Bean
+	public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
+		RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
+				.clientId("client")
+				.clientSecret("{noop}secret")
+				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+				.redirectUri("http://localhost:4200/login")
+				.build();
+
+		JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcTemplate);
+		registeredClientRepository.save(registeredClient);
+
+		return registeredClientRepository;
+	}
+```
+
+3. Run Authorization Server and go to http://localhost:8081/oauth2/authorize?response_type=code&client_id=client
+ * You will be redirect to "http://localhost:4200/login?code=abcdef" where "abcdef" is the authorization code
+4. Request tokens
+```
+curl --location 'localhost:8081/oauth2/token' \
+--header 'Authorization: Basic Y2xpZW50OnNlY3JldA==' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--header 'Cookie: JSESSIONID=1234ABCD' \
+--data-urlencode 'grant_type=authorization_code' \
+--data-urlencode 'code=abcdef' \
+--data-urlencode 'redirect-uri=http://localhost:4200/login'
+```
+ * You will get something like this:
+```
+{
+    "access_token": "eyJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.Il7zL7cDalqVITSJ1L5IeZ600y_RpZsusleWKiPHfdegEkNcoHj7uMIpUmjiFG3ZdF1vP_h9WIoah5rcwjOW9ecZ85dW_67_q-JwUwA_8bxOQsJTgPVxt1iDyhiUH_LJ7_E-tzygR5ur8eDD6U7OthKpt6u6XlqsZbQ1oh66JwtKhJJDb8cQs-TiZzKZ9UP_dQgMyKfXRPeC4r7DxCF9GWAWKIDQ2zpY2i4KrDPa7npT_dvJ5Q8tYwzzFhTEM6zu1GsCLBt7_MBdhwhW_89VdMmGaKNLv9wh3ZBYZF_QaXsEy_D3yd6g3Ac4Ww6O0g26LdTuJXCACDrWpKYruJEeHA.zWWxzTpIIi3ypd1F.Gb1O9nRXDZPgfVdISJOreWmo40q8kxf_iwK-AdGbO4B1zil77BFfi5uVSRWr-Q.S4MDPvAoFlBgiOvV-Ag3vA",
+    "refresh_token": "bOI4wppJVfo1MABYBsroLkLDq-C4BprfApr-WSdX62Csm05_WT4bHUl0UqOH74kNczM2pE5opPe6D824BUjix482wj9PEcFf0xZwJXhPkBPAGqeQNBLoaLLasWTaKoIr",
+    "token_type": "Bearer",
+    "expires_in": 299
+}
+```
+5. Request Resource server
+```
+curl --location 'localhost:8082/' \
+--header 'Authorization: Bearer eyJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.Il7zL7cDalqVITSJ1L5IeZ600y_RpZsusleWKiPHfdegEkNcoHj7uMIpUmjiFG3ZdF1vP_h9WIoah5rcwjOW9ecZ85dW_67_q-JwUwA_8bxOQsJTgPVxt1iDyhiUH_LJ7_E-tzygR5ur8eDD6U7OthKpt6u6XlqsZbQ1oh66JwtKhJJDb8cQs-TiZzKZ9UP_dQgMyKfXRPeC4r7DxCF9GWAWKIDQ2zpY2i4KrDPa7npT_dvJ5Q8tYwzzFhTEM6zu1GsCLBt7_MBdhwhW_89VdMmGaKNLv9wh3ZBYZF_QaXsEy_D3yd6g3Ac4Ww6O0g26LdTuJXCACDrWpKYruJEeHA.zWWxzTpIIi3ypd1F.Gb1O9nRXDZPgfVdISJOreWmo40q8kxf_iwK-AdGbO4B1zil77BFfi5uVSRWr-Q.S4MDPvAoFlBgiOvV-Ag3vA' \
+--header 'Cookie: JSESSIONID=56425C2EECD88C998DFEBDB8871DB2D1'
+```
+ * You will get "You got it !"
+ * If you got an HTTP 401:
+```
+curl --location 'localhost:8081/oauth2/token' \
+--header 'Authorization: Basic Y2xpZW50OnNlY3JldA==' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--header 'Cookie: JSESSIONID=56425C2EECD88C998DFEBDB8871DB2D1' \
+--data-urlencode 'grant_type=refresh_token' \
+--data-urlencode 'refresh_token=bOI4wppJVfo1MABYBsroLkLDq-C4BprfApr-WSdX62Csm05_WT4bHUl0UqOH74kNczM2pE5opPe6D824BUjix482wj9PEcFf0xZwJXhPkBPAGqeQNBLoaLLasWTaKoIr'
+```
+The response will be the same of step 4, after that do step 5 again
