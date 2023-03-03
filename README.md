@@ -1,8 +1,8 @@
-# Spring Oauth
+# Spring OAuth
 
 [Read Article](https://article)
 
-This is an implementation of authorization server and resourcer server with oauth protocol and JWE standard in Spring Boot 3.
+This is an implementation of authorization server and resourcer server with OAuth protocol and JWE standard in Spring Boot 3.
 The intention is to show a simple implementation changing at least the default Spring Framework settings.
 
 [Spring Security Documentation](https://docs.spring.io/spring-security/reference/servlet/getting-started.html)
